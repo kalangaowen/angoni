@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeatVault PRO - Music & Video Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            accent: '#ec4899',
+                            darkBg: '#0b0f19',
+                            cardBg: '#111827',
+                            borderBg: '#1f2937'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #f3f4f6; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #111827; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        .glass-panel { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .gradient-text { background: linear-gradient(135deg, #818cf8, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .audio-wave-bar {
+            width: 4px;
+            background: linear-gradient(180deg, #ec4899, #818cf8);
+            border-radius: 4px;
+            animation: waveBounce 1.2s ease-in-out infinite alternate;
+        }
+        .audio-wave-bar:nth-child(2n) { animation-delay: 0.2s; }
+        .audio-wave-bar:nth-child(3n) { animation-delay: 0.4s; }
+        .audio-wave-bar:nth-child(4n) { animation-delay: 0.6s; }
+        .audio-wave-bar:nth-child(5n) { animation-delay: 0.1s; }
+        @keyframes waveBounce {
+            0% { height: 12px; }
+            100% { height: 50px; }
+        }
+
+        .fade-transition {
+            transition: opacity 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-brand-darkBg text-gray-100 min-h-screen flex flex-col custom-scrollbar selection:bg-brand-500 selection:text-white">
+
+    <!-- Global Header Nav -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-gray-800/80 px-4 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="resetFilters()">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid font-bold fa-play text-white text-lg ml-0.5"></i>
+            </div>
+            <div>
+                <span class="text-xl font-black tracking-wider text-white">BEAT<span class="gradient-text">VAULT</span></span>
+                <span class="hidden sm:inline-block text-[10px] uppercase font-semibold px-2 py-0.5 bg-indigo-500/20 text-indigo-400 rounded-full border border-indigo-500/30 ml-2">PRO</span>
+            </div>
+        </div>
+
+        <div class="flex-1 max-w-xl relative">
+            <div class="relative flex items-center">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="text" id="searchInput" oninput="handleSearch(event)" placeholder="Search songs, artists, genres..." class="w-full bg-gray-900/90 text-sm text-gray-200 pl-11 pr-10 py-2.5 rounded-full border border-gray-700/60 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder-gray-500">
+                <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3 text-gray-400 hover:text-white p-1">
+                    <i class="fa-solid fa-circle-xmark text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <!-- Role Toggle Control -->
+            <button onclick="toggleRoleMode()" id="roleToggleBtn" title="Switch User/Admin Role" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold px-3.5 py-2 rounded-full border border-gray-700 transition-all">
+                <i id="roleIcon" class="fa-solid fa-user-lock text-amber-400"></i>
+                <span id="roleText">Role: Public User</span>
+            </button>
+
+            <!-- Admin Upload Track Button (Only visible in Admin Mode) -->
+            <button id="uploadTrackBtn" onclick="openUploadModal()" class="hidden flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-medium px-4 py-2.5 rounded-full shadow-lg shadow-indigo-600/20 transition-all transform active:scale-95">
+                <i class="fa-solid fa-cloud-arrow-up text-base"></i>
+                <span class="hidden sm:inline">Upload Track</span>
+            </button>
+
+            <button onclick="toggleSavedFilter()" id="savedFilterBtn" title="Saved Tracks" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 border border-gray-700 flex items-center justify-center text-gray-300 hover:text-amber-400 transition-colors relative">
+                <i class="fa-solid fa-bookmark"></i>
+                <span id="savedBadge" class="hidden absolute -top-1 -right-1 bg-pink-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-8">
+
+        <!-- Hero Video Showcase Carousel -->
+        <section id="heroSection" class="relative rounded-3xl overflow-hidden shadow-2xl border border-gray-800 group" onmouseenter="pauseHeroCarousel()" onmouseleave="startHeroCarousel()">
+            <div class="relative h-[320px] sm:h-[420px] md:h-[480px] w-full bg-slate-900">
+                <img id="heroImage" src="" alt="Featured Media" class="w-full h-full object-cover brightness-75 group-hover:scale-105 transition-all duration-700 ease-out fade-transition">
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/50 to-transparent"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-gray-950/90 via-transparent to-transparent"></div>
+
+                <div class="absolute bottom-0 left-0 p-6 sm:p-10 max-w-2xl space-y-3 sm:space-y-4 z-10">
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 bg-pink-600 text-white text-xs font-bold uppercase tracking-wider rounded-full flex items-center gap-1.5 shadow-md">
+                            <i class="fa-solid fa-fire text-amber-300"></i> Featured Premiere
+                        </span>
+                        <span id="heroTypeTag" class="px-2.5 py-1 bg-indigo-500/30 text-indigo-300 text-xs font-bold rounded-full border border-indigo-400/30 uppercase tracking-wider"></span>
+                        <span id="heroGenre" class="px-3 py-1 bg-gray-800/80 backdrop-blur-md text-gray-300 text-xs font-semibold rounded-full border border-gray-700"></span>
+                    </div>
+                    <h1 id="heroTitle" class="text-2xl sm:text-4xl md:text-5xl font-black text-white leading-tight drop-shadow-md fade-transition"></h1>
+                    <p id="heroArtist" class="text-lg sm:text-xl font-medium text-indigo-300 flex items-center gap-2 fade-transition">
+                        <i class="fa-solid fa-circle-check text-indigo-400 text-sm"></i> <span></span>
+                    </p>
+                    <p id="heroDescription" class="text-sm text-gray-300 line-clamp-2 max-w-xl font-light fade-transition"></p>
+                    
+                    <div class="flex flex-wrap items-center gap-3 pt-2">
+                        <button id="heroPlayBtn" class="flex items-center gap-2 bg-white text-gray-950 hover:bg-indigo-50 font-bold px-6 py-3 rounded-full shadow-xl transition-all transform hover:scale-105 active:scale-95 text-sm sm:text-base">
+                            <i class="fa-solid fa-play text-indigo-600"></i> Play Now
+                        </button>
+                        <button id="heroDownloadBtn" class="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold px-6 py-3 rounded-full shadow-xl transition-all transform hover:scale-105 active:scale-95 text-sm sm:text-base">
+                            <i class="fa-solid fa-download text-white"></i> Download File
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Carousel Controls & Indicators -->
+                <div class="absolute bottom-6 right-6 sm:bottom-10 sm:right-10 flex items-center gap-3 z-20">
+                    <button onclick="prevFeaturedSlide()" class="w-9 h-9 rounded-full bg-gray-900/80 hover:bg-indigo-600 text-white border border-gray-700/80 flex items-center justify-center transition-all backdrop-blur-sm">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                    </button>
+                    <div id="heroIndicators" class="flex items-center gap-1.5 bg-gray-950/60 backdrop-blur-md px-3 py-2 rounded-full border border-gray-800"></div>
+                    <button onclick="nextFeaturedSlide()" class="w-9 h-9 rounded-full bg-gray-900/80 hover:bg-indigo-600 text-white border border-gray-700/80 flex items-center justify-center transition-all backdrop-blur-sm">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Category Chips -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar text-sm font-medium" id="categoryChips">
+            <button onclick="filterCategory('MUSIC')" class="category-btn active px-5 py-2.5 rounded-full bg-indigo-600 text-white whitespace-nowrap transition-all shadow-md">MUSIC</button>
+            <button onclick="filterCategory('ENTERTAINMENT')" class="category-btn px-5 py-2.5 rounded-full bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700/60 whitespace-nowrap transition-all">ENTERTAINMENT</button>
+            <button onclick="filterCategory('WEDDINGS')" class="category-btn px-5 py-2.5 rounded-full bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700/60 whitespace-nowrap transition-all">WEDDINGS</button>
+            <button onclick="filterCategory('POETRY')" class="category-btn px-5 py-2.5 rounded-full bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700/60 whitespace-nowrap transition-all">POETRY</button>
+        </div>
+
+        <!-- Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-3 space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 id="feedTitle" class="text-xl font-bold text-white flex items-center gap-2.5">
+                        <i class="fa-solid fa-compact-disc text-indigo-400"></i> Explore Media
+                    </h2>
+                    <span id="videoCountBadge" class="text-xs font-semibold px-2.5 py-1 bg-gray-800 text-gray-400 rounded-lg border border-gray-700">0 Tracks</span>
+                </div>
+
+                <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"></div>
+
+                <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center bg-gray-900/40 rounded-3xl border border-dashed border-gray-800 space-y-3">
+                    <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 text-2xl">
+                        <i class="fa-solid fa-music"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-300">No Media Found</h3>
+                    <p class="text-sm text-gray-500 max-w-sm">Try tweaking your search term or filter category!</p>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="glass-panel p-5 rounded-2xl border border-gray-800 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+                        <h3 class="font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-pink-500"></i> Trending Charts
+                        </h3>
+                        <span class="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Top Views</span>
+                    </div>
+
+                    <div id="trendingList" class="space-y-3"></div>
+                </div>
+
+                <div class="p-5 rounded-2xl bg-gradient-to-br from-indigo-900/40 via-purple-900/20 to-gray-900 border border-indigo-500/20 space-y-3 text-xs text-gray-300">
+                    <div class="flex items-center gap-2 text-indigo-400 font-bold uppercase tracking-wider">
+                        <i class="fa-solid fa-circle-info"></i> Direct Downloads
+                    </div>
+                    <p class="leading-relaxed">All public media files are hosted for fast playback and high-speed offline file saving.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Player Modal -->
+    <div id="playerModal" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-lg flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
+        <div class="bg-gray-900 border border-gray-800 w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl relative flex flex-col max-h-[92vh] my-auto">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-gray-800 bg-gray-950/60">
+                <div class="flex items-center gap-2 text-xs font-semibold text-gray-400">
+                    <span id="modalMediaTypeBadge" class="px-2 py-0.5 rounded bg-pink-500/20 text-pink-400 border border-pink-500/30 uppercase text-[10px] font-bold"></span>
+                    <span id="modalGenreTag" class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"></span>
+                    <span>&bull;</span>
+                    <span id="modalReleaseDate"></span>
+                </div>
+                <button onclick="closePlayerModal()" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Media Container -->
+            <div class="relative bg-black aspect-video w-full flex items-center justify-center overflow-hidden">
+                <div id="mediaSpinner" class="hidden absolute inset-0 z-10 bg-black/60 flex items-center justify-center">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-500"></i>
+                </div>
+                <div id="mediaErrorOverlay" class="hidden absolute inset-0 z-20 bg-gray-950/90 flex flex-col items-center justify-center p-4 text-center space-y-3">
+                    <i class="fa-solid fa-triangle-exclamation text-3xl text-pink-500"></i>
+                    <p class="text-sm font-medium text-gray-300">Unable to stream audio/video link or format unsupported.</p>
+                    <button onclick="reloadMediaPlayer()" class="text-xs bg-indigo-600 px-4 py-2 rounded-lg font-bold">Retry Playback</button>
+                </div>
+
+                <video id="modalVideoPlayer" controls class="w-full h-full object-contain focus:outline-none hidden" poster="" preload="metadata">
+                    <source id="videoSource" src="" type="video/mp4">
+                    Your browser does not support HTML5 video.
+                </video>
+
+                <div id="modalAudioContainer" class="hidden w-full h-full relative flex flex-col items-center justify-center p-6 bg-gradient-to-b from-gray-900 via-indigo-950/60 to-gray-950">
+                    <img id="audioPoster" src="" class="absolute inset-0 w-full h-full object-cover opacity-20 blur-xl">
+                    <div class="relative z-10 flex flex-col items-center space-y-5 w-full max-w-md text-center">
+                        <div class="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden shadow-2xl border-2 border-indigo-500/30 relative group">
+                            <img id="audioCoverImage" src="" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <i class="fa-solid fa-music text-3xl text-indigo-400"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-1.5 h-12">
+                            <div class="audio-wave-bar"></div>
+                            <div class="audio-wave-bar"></div>
+                            <div class="audio-wave-bar"></div>
+                            <div class="audio-wave-bar"></div>
+                            <div class="audio-wave-bar"></div>
+                            <div class="audio-wave-bar"></div>
+                            <div class="audio-wave-bar"></div>
+                            <div class="audio-wave-bar"></div>
+                        </div>
+
+                        <audio id="modalAudioPlayer" controls class="w-full focus:outline-none">
+                            <source id="audioSource" src="" type="audio/mpeg">
+                            Your browser does not support HTML5 audio.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-5 sm:p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1 bg-gray-900">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-5">
+                    <div class="space-y-1">
+                        <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold text-white"></h2>
+                        <div class="flex items-center gap-3 text-sm text-indigo-400 font-medium">
+                            <span id="modalArtist" class="flex items-center gap-1.5"><i class="fa-solid fa-user-check text-xs"></i> <span></span></span>
+                            <span class="text-gray-600">&bull;</span>
+                            <span id="modalViews" class="text-gray-400 text-xs"></span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Admin Only Feature Premiere Toggle -->
+                        <button id="modalFeatureBtn" class="hidden flex items-center gap-2 bg-pink-600/20 border border-pink-500/40 text-pink-400 hover:bg-pink-600 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
+                            <i class="fa-solid fa-fire"></i>
+                            <span id="modalFeatureBtnText">Feature Premiere</span>
+                        </button>
+
+                        <!-- Admin Only Delete Track Option -->
+                        <button id="modalDeleteBtn" class="hidden flex items-center gap-2 bg-red-600/20 border border-red-500/40 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
+                            <i class="fa-solid fa-trash"></i>
+                            <span>Delete</span>
+                        </button>
+
+                        <button id="modalBookmarkBtn" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-xl text-sm font-medium border border-gray-700 transition-all">
+                            <i class="fa-regular fa-bookmark text-amber-400"></i>
+                            <span>Save</span>
+                        </button>
+
+                        <button onclick="shareCurrentVideo()" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-xl text-sm font-medium border border-gray-700 transition-all">
+                            <i class="fa-solid fa-share-nodes text-indigo-400"></i>
+                            <span>Share</span>
+                        </button>
+
+                        <!-- Primary Download Action for Users -->
+                        <div class="relative">
+                            <button id="downloadDropdownBtn" onclick="toggleDownloadDropdown(event)" class="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-lg shadow-indigo-600/20 transition-all">
+                                <i class="fa-solid fa-download"></i>
+                                <span>Download Material</span>
+                                <i class="fa-solid fa-chevron-down text-xs ml-1"></i>
+                            </button>
+                            <div id="downloadMenu" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl py-2 z-30 space-y-1">
+                                <div class="px-3 py-1 text-[10px] font-bold uppercase text-gray-400 tracking-wider">Select Download Format</div>
+                                <button onclick="triggerDownload('hd')" class="w-full text-left px-4 py-2 text-xs text-gray-200 hover:bg-indigo-600 flex items-center justify-between">
+                                    <span>Full Original Quality</span> <i class="fa-solid fa-circle-arrow-down text-indigo-400"></i>
+                                </button>
+                                <button onclick="triggerDownload('mp3')" class="w-full text-left px-4 py-2 text-xs text-indigo-300 font-medium hover:bg-indigo-600 flex items-center justify-between">
+                                    <span>Audio Track (MP3)</span> <i class="fa-solid fa-music"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-950/60 p-4 rounded-xl border border-gray-800/80 space-y-2">
+                    <h4 class="text-xs font-bold uppercase text-gray-400 tracking-wider">About Track</h4>
+                    <p id="modalDescription" class="text-sm text-gray-300 leading-relaxed font-light"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Upload Modal -->
+    <div id="uploadModal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-gray-900 border border-gray-800 w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl relative p-6 space-y-5 my-auto">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white">Admin Upload Portal</h3>
+                </div>
+                <button onclick="closeUploadModal()" class="text-gray-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="uploadForm" onsubmit="handleUploadSubmit(event)" class="space-y-4 text-xs sm:text-sm">
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-gray-300">Media File (Audio or Video) *</label>
+                    <div id="dropZone" onclick="document.getElementById('mediaFileInput').click()" class="border-2 border-dashed border-gray-700 hover:border-indigo-500 bg-gray-950/60 hover:bg-indigo-950/10 rounded-2xl p-6 text-center cursor-pointer transition-all space-y-2">
+                        <div class="flex justify-center gap-3 text-indigo-400 text-2xl">
+                            <i class="fa-solid fa-file-audio"></i>
+                            <i class="fa-solid fa-file-video"></i>
+                        </div>
+                        <div id="dropZoneText" class="space-y-1">
+                            <p class="font-medium text-gray-200">Click to browse or drag & drop file</p>
+                            <p class="text-xs text-gray-500">Audio (MP3, WAV, AAC) or Video (MP4, WebM, MOV)</p>
+                        </div>
+                        <input type="file" id="mediaFileInput" accept="audio/*,video/*" onchange="handleFileSelect(event)" class="hidden">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-gray-300">Track Title *</label>
+                        <input type="text" id="uploadTitle" required placeholder="e.g. Midnight Beats" class="w-full bg-gray-950 text-gray-200 px-3.5 py-2.5 rounded-xl border border-gray-800 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-gray-300">Artist / Band Name *</label>
+                        <input type="text" id="uploadArtist" required placeholder="e.g. DJ Pulse" class="w-full bg-gray-950 text-gray-200 px-3.5 py-2.5 rounded-xl border border-gray-800 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-gray-300">Genre Tag *</label>
+                        <select id="uploadGenre" class="w-full bg-gray-950 text-gray-200 px-3 py-2.5 rounded-xl border border-gray-800 focus:outline-none focus:border-indigo-500">
+                            <option value="MUSIC">MUSIC</option>
+                            <option value="ENTERTAINMENT">ENTERTAINMENT</option>
+                            <option value="WEDDINGS">WEDDINGS</option>
+                            <option value="POETRY">POETRY</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-gray-300">Cover / Artwork URL (Optional)</label>
+                        <input type="url" id="uploadThumbnail" placeholder="https://images.unsplash.com/..." class="w-full bg-gray-950 text-gray-200 px-3.5 py-2.5 rounded-xl border border-gray-800 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-gray-300">Track Description</label>
+                    <textarea id="uploadDescription" rows="3" placeholder="Tell listeners about this track..." class="w-full bg-gray-950 text-gray-200 px-3.5 py-2.5 rounded-xl border border-gray-800 focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-3">
+                    <button type="button" onclick="closeUploadModal()" class="px-5 py-2.5 rounded-xl text-gray-400 hover:text-white font-medium hover:bg-gray-800 transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold shadow-lg shadow-indigo-600/30 transition-all">Publish Material</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 z-50 hidden bg-gray-900 border border-indigo-500/40 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transition-all transform translate-y-4">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-indigo-400 text-lg"></i>
+        <span id="toastMessage" class="text-xs font-medium">Action completed!</span>
+    </div>
+
+    <script>
+        const SAMPLE_VIDEOS = [
+            {
+                id: 'vid-1',
+                type: 'video',
+                title: 'Neon Nights & Cyber Rhythm',
+                artist: 'K3VIN & The Synthetics',
+                genre: 'MUSIC',
+                views: 240500,
+                releaseDate: '2026-08-14',
+                thumbnail: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80',
+                mediaUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+                description: 'Experience an electrifying visual journey through neon-drenched futuristic landscapes coupled with high-tempo synthwave bass lines.',
+                isSaved: false,
+                isFeatured: true
+            },
+            {
+                id: 'audio-1',
+                type: 'audio',
+                title: 'Acoustic Sunset Melody',
+                artist: 'Serenade Acoustic',
+                genre: 'MUSIC',
+                views: 94200,
+                releaseDate: '2026-09-10',
+                thumbnail: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80',
+                mediaUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                description: 'Relaxing unplugged acoustic guitar melody crafted for peaceful sunset chillouts and study sessions.',
+                isSaved: true,
+                isFeatured: true
+            },
+            {
+                id: 'vid-2',
+                type: 'video',
+                title: 'Afro-Pulse Vibration',
+                artist: 'Burna Kings & Amara',
+                genre: 'ENTERTAINMENT',
+                views: 512000,
+                releaseDate: '2026-09-01',
+                thumbnail: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&auto=format&fit=crop&q=80',
+                mediaUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+                description: 'Soulful percussion meets smooth summer vibes in this energetic tropical rhythm shot live in Lagos.',
+                isSaved: true,
+                isFeatured: false
+            },
+            {
+                id: 'vid-3',
+                type: 'video',
+                title: 'Urban Underground Cypher',
+                artist: 'MC Eclipse ft. Ghost Flow',
+                genre: 'POETRY',
+                views: 189000,
+                releaseDate: '2026-07-22',
+                thumbnail: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&auto=format&fit=crop&q=80',
+                mediaUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+                description: 'Raw lyricism over booming 808s recorded live in the heart of downtown Brooklyn.',
+                isSaved: false,
+                isFeatured: false
+            }
+        ];
+
+        let videos = [];
+        let activeCategory = 'MUSIC';
+        let searchQuery = '';
+        let currentPlayingVideoId = null;
+        let selectedUploadedFile = null;
+        let isAdmin = false; // Admin Role Flag
+
+        // Carousel variables
+        let featuredIndex = 0;
+        let heroCarouselInterval = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadVideosFromStorage();
+            renderFeaturedHero();
+            startHeroCarousel();
+            renderFeed();
+            renderTrendingSidebar();
+            updateSavedBadgeCount();
+            setupMediaListeners();
+            checkDeepLinkHash();
+            updateRoleUI();
+        });
+
+        window.addEventListener('hashchange', checkDeepLinkHash);
+
+        function toggleRoleMode() {
+            isAdmin = !isAdmin;
+            updateRoleUI();
+            renderFeed();
+            if (currentPlayingVideoId) {
+                const video = videos.find(v => v.id === currentPlayingVideoId);
+                if (video) updateModalInteractionUI(video);
+            }
+            showToast(isAdmin ? 'Switched to Admin Mode' : 'Switched to Public User View');
+        }
+
+        function updateRoleUI() {
+            const roleBtn = document.getElementById('roleToggleBtn');
+            const roleIcon = document.getElementById('roleIcon');
+            const roleText = document.getElementById('roleText');
+            const uploadBtn = document.getElementById('uploadTrackBtn');
+
+            if (isAdmin) {
+                roleBtn.className = "flex items-center gap-2 bg-pink-600 text-white text-xs font-bold px-3.5 py-2 rounded-full shadow-md transition-all";
+                roleIcon.className = "fa-solid fa-user-shield text-white";
+                roleText.textContent = "Role: Administrator";
+                uploadBtn.classList.remove('hidden');
+            } else {
+                roleBtn.className = "flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold px-3.5 py-2 rounded-full border border-gray-700 transition-all";
+                roleIcon.className = "fa-solid fa-user text-indigo-400";
+                roleText.textContent = "Role: Public User";
+                uploadBtn.classList.add('hidden');
+            }
+        }
+
+        function checkDeepLinkHash() {
+            const hash = window.location.hash;
+            if (hash.startsWith('#play=')) {
+                const vidId = hash.replace('#play=', '');
+                openPlayerModal(vidId);
+            }
+        }
+
+        function loadVideosFromStorage() {
+            try {
+                const stored = localStorage.getItem('beatvault_videos');
+                videos = stored ? JSON.parse(stored) : SAMPLE_VIDEOS;
+            } catch (e) {
+                videos = SAMPLE_VIDEOS;
+            }
+        }
+
+        function saveVideosToStorage() {
+            try {
+                localStorage.setItem('beatvault_videos', JSON.stringify(videos));
+            } catch (e) {
+                console.warn('LocalStorage limit reached or disabled.');
+            }
+        }
+
+        function toggleFeaturedVideo(videoId, e) {
+            if (e) e.stopPropagation();
+            if (!isAdmin) {
+                showToast('Only administrators can manage featured tracks!');
+                return;
+            }
+
+            const targetVideo = videos.find(v => v.id === videoId);
+            if (!targetVideo) return;
+
+            targetVideo.isFeatured = !targetVideo.isFeatured;
+            
+            if (!videos.some(v => v.isFeatured)) {
+                targetVideo.isFeatured = true;
+                showToast('At least one track must remain featured!');
+                return;
+            }
+
+            saveVideosToStorage();
+            featuredIndex = 0;
+            renderFeaturedHero();
+            renderFeed();
+
+            if (currentPlayingVideoId === videoId) {
+                updateModalInteractionUI(targetVideo);
+            }
+
+            showToast(`"${targetVideo.title}" ${targetVideo.isFeatured ? 'added to Featured' : 'removed from Featured'}`);
+        }
+
+        function deleteTrack(videoId) {
+            if (!isAdmin) return;
+            if (confirm('Are you sure you want to delete this track from the platform?')) {
+                videos = videos.filter(v => v.id !== videoId);
+                saveVideosToStorage();
+                closePlayerModal();
+                renderFeaturedHero();
+                renderFeed();
+                renderTrendingSidebar();
+                showToast('Track successfully removed');
+            }
+        }
+
+        function getFeaturedVideos() {
+            const featured = videos.filter(v => v.isFeatured);
+            return featured.length > 0 ? featured : [videos[0]];
+        }
+
+        function renderFeaturedHero() {
+            const featuredList = getFeaturedVideos();
+            if (featuredIndex >= featuredList.length) featuredIndex = 0;
+            if (featuredIndex < 0) featuredIndex = featuredList.length - 1;
+
+            const featured = featuredList[featuredIndex];
+
+            document.getElementById('heroImage').src = featured.thumbnail;
+            document.getElementById('heroTitle').textContent = featured.title;
+            document.getElementById('heroArtist').querySelector('span').textContent = featured.artist;
+            document.getElementById('heroGenre').textContent = featured.genre;
+            document.getElementById('heroTypeTag').textContent = featured.type === 'audio' ? 'Audio Track' : 'Video';
+            document.getElementById('heroDescription').textContent = featured.description;
+            
+            document.getElementById('heroPlayBtn').onclick = () => openPlayerModal(featured.id);
+            document.getElementById('heroDownloadBtn').onclick = () => quickDownload(featured.id);
+
+            const indicatorsContainer = document.getElementById('heroIndicators');
+            indicatorsContainer.innerHTML = '';
+            featuredList.forEach((_, idx) => {
+                const dot = document.createElement('button');
+                dot.className = `w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full transition-all ${idx === featuredIndex ? 'bg-pink-500 w-5 sm:w-6' : 'bg-gray-600 hover:bg-gray-400'}`;
+                dot.onclick = () => {
+                    featuredIndex = idx;
+                    renderFeaturedHero();
+                };
+                indicatorsContainer.appendChild(dot);
+            });
+        }
+
+        function nextFeaturedSlide() {
+            const featuredList = getFeaturedVideos();
+            featuredIndex = (featuredIndex + 1) % featuredList.length;
+            renderFeaturedHero();
+        }
+
+        function prevFeaturedSlide() {
+            const featuredList = getFeaturedVideos();
+            featuredIndex = (featuredIndex - 1 + featuredList.length) % featuredList.length;
+            renderFeaturedHero();
+        }
+
+        function startHeroCarousel() {
+            stopHeroCarousel();
+            heroCarouselInterval = setInterval(() => {
+                nextFeaturedSlide();
+            }, 2000);
+        }
+
+        function pauseHeroCarousel() {
+            stopHeroCarousel();
+        }
+
+        function stopHeroCarousel() {
+            if (heroCarouselInterval) {
+                clearInterval(heroCarouselInterval);
+                heroCarouselInterval = null;
+            }
+        }
+
+        function renderFeed() {
+            const container = document.getElementById('videoGrid');
+            const emptyState = document.getElementById('emptyState');
+            container.innerHTML = '';
+
+            const filtered = videos.filter(v => {
+                const matchesGenre = activeCategory === 'Saved' ? v.isSaved : v.genre.toLowerCase() === activeCategory.toLowerCase();
+                const matchesSearch = v.title.toLowerCase().includes(searchQuery) || v.artist.toLowerCase().includes(searchQuery) || v.genre.toLowerCase().includes(searchQuery);
+                return matchesGenre && matchesSearch;
+            });
+
+            document.getElementById('videoCountBadge').textContent = `${filtered.length} Track${filtered.length !== 1 ? 's' : ''}`;
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+                filtered.forEach(video => container.appendChild(createVideoCard(video)));
+            }
+        }
+
+        function createVideoCard(video) {
+            const card = document.createElement('div');
+            card.className = "group bg-brand-cardBg rounded-2xl overflow-hidden border border-gray-800/80 hover:border-indigo-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 flex flex-col justify-between";
+
+            const isAudio = video.type === 'audio';
+
+            const featuredAdminBadge = isAdmin ? `
+                <button onclick="toggleFeaturedVideo('${video.id}', event)" title="${video.isFeatured ? 'Remove from Featured' : 'Make Featured'}" class="absolute top-2 right-2 ${video.isFeatured ? 'bg-amber-500 text-slate-950' : 'bg-black/60 hover:bg-pink-600 text-white'} text-[10px] font-bold px-2 py-1 rounded-md transition-all flex items-center gap-1 shadow-md z-10">
+                    <i class="fa-solid fa-fire text-[10px]"></i> ${video.isFeatured ? 'Featured' : 'Make Featured'}
+                </button>
+            ` : (video.isFeatured ? `
+                <span class="absolute top-2 right-2 bg-amber-500/90 text-slate-950 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-md">
+                    <i class="fa-solid fa-fire text-[10px]"></i> Featured
+                </span>
+            ` : '');
+
+            card.innerHTML = `
+                <div>
+                    <div class="relative aspect-video bg-gray-950 overflow-hidden cursor-pointer" onclick="openPlayerModal('${video.id}')">
+                        <img src="${escapeHtml(video.thumbnail)}" alt="${escapeHtml(video.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800'">
+                        <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                            <div class="w-12 h-12 rounded-full bg-indigo-600/90 text-white flex items-center justify-center transform scale-90 group-hover:scale-100 transition-all shadow-lg">
+                                <i class="fa-solid ${isAudio ? 'fa-music' : 'fa-play'} ml-0.5 text-lg"></i>
+                            </div>
+                        </div>
+                        <span class="absolute top-2 left-2 ${isAudio ? 'bg-pink-600' : 'bg-indigo-600'} text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wide flex items-center gap-1 shadow-md">
+                            <i class="fa-solid ${isAudio ? 'fa-headphones' : 'fa-film'} text-[9px]"></i> ${isAudio ? 'AUDIO' : 'VIDEO'}
+                        </span>
+                        
+                        ${featuredAdminBadge}
+
+                        <span class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md text-[10px] text-gray-200 px-2 py-0.5 rounded-md font-mono">${escapeHtml(video.genre)}</span>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <h3 onclick="openPlayerModal('${video.id}')" class="font-bold text-gray-100 line-clamp-1 hover:text-indigo-400 cursor-pointer transition-colors text-base">${escapeHtml(video.title)}</h3>
+                        <p class="text-xs font-medium text-indigo-300 flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-[10px]"></i> ${escapeHtml(video.artist)}</p>
+                        <div class="flex items-center gap-3 text-[11px] text-gray-400 font-medium">
+                            <span><i class="fa-solid fa-eye text-gray-500 mr-1"></i>${formatNumber(video.views)} views</span>
+                            <span>&bull;</span>
+                            <span>${timeAgo(video.releaseDate)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 py-2.5 bg-gray-950/40 border-t border-gray-800/60 flex items-center justify-between">
+                    <button onclick="toggleBookmark('${video.id}', event)" class="text-gray-400 hover:text-amber-400 text-xs flex items-center gap-1 transition-colors">
+                        <i class="${video.isSaved ? 'fa-solid text-amber-400' : 'fa-regular'} fa-bookmark"></i>
+                        <span>${video.isSaved ? 'Saved' : 'Save'}</span>
+                    </button>
+                    <button onclick="quickDownload('${video.id}', event)" title="Download Track" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-all">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Download</span>
+                    </button>
+                </div>
+            `;
+            return card;
+        }
+
+        function renderTrendingSidebar() {
+            const container = document.getElementById('trendingList');
+            container.innerHTML = '';
+            const sorted = [...videos].sort((a, b) => b.views - a.views).slice(0, 4);
+
+            sorted.forEach((video, idx) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center gap-3 p-2 rounded-xl hover:bg-gray-800/60 cursor-pointer transition-colors group";
+                item.onclick = () => openPlayerModal(video.id);
+                item.innerHTML = `
+                    <span class="text-lg font-black text-gray-600 group-hover:text-pink-500 w-4 text-center">${idx + 1}</span>
+                    <img src="${escapeHtml(video.thumbnail)}" class="w-12 h-12 rounded-lg object-cover bg-gray-900" alt="thumb">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-xs font-bold text-gray-200 truncate group-hover:text-indigo-400">${escapeHtml(video.title)}</h4>
+                        <p class="text-[11px] text-gray-400 truncate">${escapeHtml(video.artist)}</p>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] ${video.type === 'audio' ? 'text-pink-400 font-bold' : 'text-indigo-400 font-semibold'} uppercase">${video.type || 'video'}</span>
+                            <span class="text-[10px] text-gray-500 font-mono">${formatNumber(video.views)} views</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function setupMediaListeners() {
+            const videoPlayer = document.getElementById('modalVideoPlayer');
+            const audioPlayer = document.getElementById('modalAudioPlayer');
+            const spinner = document.getElementById('mediaSpinner');
+            const errorOverlay = document.getElementById('mediaErrorOverlay');
+
+            [videoPlayer, audioPlayer].forEach(player => {
+                player.addEventListener('waiting', () => spinner.classList.remove('hidden'));
+                player.addEventListener('playing', () => {
+                    spinner.classList.add('hidden');
+                    errorOverlay.classList.add('hidden');
+                });
+                player.addEventListener('error', () => {
+                    spinner.classList.add('hidden');
+                    errorOverlay.classList.remove('hidden');
+                });
+            });
+        }
+
+        function reloadMediaPlayer() {
+            document.getElementById('mediaErrorOverlay').classList.add('hidden');
+            const videoPlayer = document.getElementById('modalVideoPlayer');
+            const audioPlayer = document.getElementById('modalAudioPlayer');
+            
+            if (!videoPlayer.classList.contains('hidden')) {
+                videoPlayer.load();
+                videoPlayer.play().catch(() => {});
+            } else {
+                audioPlayer.load();
+                audioPlayer.play().catch(() => {});
+            }
+        }
+
+        function openPlayerModal(videoId) {
+            const video = videos.find(v => v.id === videoId);
+            if (!video) return;
+
+            currentPlayingVideoId = videoId;
+            video.views += 1;
+            saveVideosToStorage();
+            renderTrendingSidebar();
+
+            window.location.hash = `play=${videoId}`;
+
+            document.getElementById('modalTitle').textContent = video.title;
+            document.getElementById('modalArtist').querySelector('span').textContent = video.artist;
+            document.getElementById('modalViews').textContent = `${formatNumber(video.views)} views`;
+            document.getElementById('modalGenreTag').textContent = video.genre;
+            document.getElementById('modalMediaTypeBadge').textContent = video.type === 'audio' ? 'AUDIO' : 'VIDEO';
+            document.getElementById('modalReleaseDate').textContent = video.releaseDate;
+            document.getElementById('modalDescription').textContent = video.description || 'No description available.';
+            
+            const videoPlayer = document.getElementById('modalVideoPlayer');
+            const audioContainer = document.getElementById('modalAudioContainer');
+            const audioPlayer = document.getElementById('modalAudioPlayer');
+
+            if (video.type === 'audio') {
+                videoPlayer.pause();
+                videoPlayer.classList.add('hidden');
+                audioContainer.classList.remove('hidden');
+                
+                document.getElementById('audioPoster').src = video.thumbnail;
+                document.getElementById('audioCoverImage').src = video.thumbnail;
+                document.getElementById('audioSource').src = video.mediaUrl;
+                audioPlayer.load();
+                audioPlayer.play().catch(() => {});
+            } else {
+                audioPlayer.pause();
+                audioContainer.classList.add('hidden');
+                videoPlayer.classList.remove('hidden');
+
+                document.getElementById('videoSource').src = video.mediaUrl;
+                videoPlayer.poster = video.thumbnail;
+                videoPlayer.load();
+                videoPlayer.play().catch(() => {});
+            }
+
+            updateModalInteractionUI(video);
+            document.getElementById('playerModal').classList.remove('hidden');
+        }
+
+        function closePlayerModal() {
+            const videoPlayer = document.getElementById('modalVideoPlayer');
+            const audioPlayer = document.getElementById('modalAudioPlayer');
+            videoPlayer.pause();
+            audioPlayer.pause();
+
+            document.getElementById('playerModal').classList.add('hidden');
+            currentPlayingVideoId = null;
+            history.replaceState(null, null, ' ');
+            document.getElementById('downloadMenu').classList.add('hidden');
+        }
+
+        function updateModalInteractionUI(video) {
+            const bookmarkBtn = document.getElementById('modalBookmarkBtn');
+            const featureBtn = document.getElementById('modalFeatureBtn');
+            const featureBtnText = document.getElementById('modalFeatureBtnText');
+            const deleteBtn = document.getElementById('modalDeleteBtn');
+
+            // Render Admin Only Controls
+            if (isAdmin) {
+                featureBtn.classList.remove('hidden');
+                deleteBtn.classList.remove('hidden');
+
+                if (video.isFeatured) {
+                    featureBtn.className = "flex items-center gap-2 bg-amber-500 text-slate-950 border border-amber-400 px-4 py-2 rounded-xl text-sm font-bold transition-all";
+                    featureBtnText.textContent = "Featured";
+                } else {
+                    featureBtn.className = "flex items-center gap-2 bg-pink-600/20 border border-pink-500/40 text-pink-400 hover:bg-pink-600 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all";
+                    featureBtnText.textContent = "Feature Premiere";
+                }
+
+                featureBtn.onclick = () => toggleFeaturedVideo(video.id);
+                deleteBtn.onclick = () => deleteTrack(video.id);
+            } else {
+                featureBtn.classList.add('hidden');
+                deleteBtn.classList.add('hidden');
+            }
+
+            if (video.isSaved) {
+                bookmarkBtn.className = "flex items-center gap-2 bg-amber-500/20 border border-amber-500/40 text-amber-400 px-4 py-2 rounded-xl text-sm font-medium transition-all";
+                bookmarkBtn.querySelector('i').className = "fa-solid fa-bookmark text-amber-400";
+            } else {
+                bookmarkBtn.className = "flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-xl text-sm font-medium border border-gray-700 transition-all";
+                bookmarkBtn.querySelector('i').className = "fa-regular fa-bookmark text-amber-400";
+            }
+
+            bookmarkBtn.onclick = () => {
+                toggleBookmark(video.id);
+                updateModalInteractionUI(video);
+            };
+        }
+
+        function toggleBookmark(videoId, e) {
+            if (e) e.stopPropagation();
+            const video = videos.find(v => v.id === videoId);
+            if (!video) return;
+
+            video.isSaved = !video.isSaved;
+            saveVideosToStorage();
+            renderFeed();
+            updateSavedBadgeCount();
+            showToast(video.isSaved ? 'Saved to Library!' : 'Removed from Library');
+        }
+
+        function updateSavedBadgeCount() {
+            const savedCount = videos.filter(v => v.isSaved).length;
+            const badge = document.getElementById('savedBadge');
+            badge.textContent = savedCount;
+            badge.classList.toggle('hidden', savedCount === 0);
+        }
+
+        function toggleDownloadDropdown(e) {
+            if (e) e.stopPropagation();
+            document.getElementById('downloadMenu').classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', () => {
+            const menu = document.getElementById('downloadMenu');
+            if (menu) menu.classList.add('hidden');
+        });
+
+        function quickDownload(videoId, e) {
+            if (e) e.stopPropagation();
+            const video = videos.find(v => v.id === videoId);
+            if (!video) return;
+            const ext = video.type === 'audio' ? 'mp3' : 'mp4';
+            executeFileDownload(video.mediaUrl, `${slugify(video.title)}.${ext}`);
+        }
+
+        function triggerDownload(quality) {
+            if (!currentPlayingVideoId) return;
+            const video = videos.find(v => v.id === currentPlayingVideoId);
+            if (!video) return;
+
+            const ext = (quality === 'mp3' || video.type === 'audio') ? 'mp3' : 'mp4';
+            const filename = `${slugify(video.title)}.${ext}`;
+            executeFileDownload(video.mediaUrl, filename);
+            document.getElementById('downloadMenu').classList.add('hidden');
+        }
+
+        function executeFileDownload(url, filename) {
+            showToast(`Downloading ${filename}...`);
+            fetch(url)
+                .then(res => res.blob())
+                .then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(blobUrl);
+                    showToast('Download complete!');
+                })
+                .catch(() => {
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.target = '_blank';
+                    a.download = filename;
+                    a.click();
+                });
+        }
+
+        function shareCurrentVideo() {
+            if (!currentPlayingVideoId) return;
+            const dummyUrl = window.location.origin + window.location.pathname + `#play=${currentPlayingVideoId}`;
+            navigator.clipboard.writeText(dummyUrl).then(() => {
+                showToast('Track link copied to clipboard!');
+            }).catch(() => {
+                showToast('Share link generated!');
+            });
+        }
+
+        function openUploadModal() {
+            if (!isAdmin) {
+                showToast('Upload access is restricted to administrators.');
+                return;
+            }
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            document.getElementById('uploadForm').reset();
+            selectedUploadedFile = null;
+            document.getElementById('dropZoneText').innerHTML = `
+                <p class="font-medium text-gray-200">Click to browse or drag & drop file</p>
+                <p class="text-xs text-gray-500">Audio (MP3, WAV, AAC) or Video (MP4, WebM, MOV)</p>
+            `;
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedUploadedFile = file;
+                const isAudio = file.type.startsWith('audio/');
+                document.getElementById('dropZoneText').innerHTML = `
+                    <p class="font-bold text-indigo-400"><i class="fa-solid ${isAudio ? 'fa-file-audio' : 'fa-file-video'} mr-1"></i> ${escapeHtml(file.name)}</p>
+                    <p class="text-xs text-gray-400">${(file.size / (1024 * 1024)).toFixed(2)} MB Selected (${isAudio ? 'Audio' : 'Video'})</p>
+                `;
+            }
+        }
+
+        function handleUploadSubmit(e) {
+            e.preventDefault();
+            if (!isAdmin) return;
+
+            const title = document.getElementById('uploadTitle').value.trim();
+            const artist = document.getElementById('uploadArtist').value.trim();
+            const genre = document.getElementById('uploadGenre').value;
+            const customThumb = document.getElementById('uploadThumbnail').value.trim();
+            const description = document.getElementById('uploadDescription').value.trim();
+
+            let mediaType = 'video';
+            let mediaBlobUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+            
+            if (selectedUploadedFile) {
+                mediaBlobUrl = URL.createObjectURL(selectedUploadedFile);
+                mediaType = selectedUploadedFile.type.startsWith('audio/') ? 'audio' : 'video';
+            }
+
+            const defaultThumb = mediaType === 'audio' 
+                ? 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800' 
+                : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800';
+
+            const newTrack = {
+                id: 'upload-' + Date.now(),
+                type: mediaType,
+                title, artist, genre,
+                views: 1,
+                releaseDate: new Date().toISOString().split('T')[0],
+                thumbnail: customThumb || defaultThumb,
+                mediaUrl: mediaBlobUrl,
+                description,
+                isSaved: false,
+                isFeatured: false
+            };
+
+            videos.unshift(newTrack);
+            saveVideosToStorage();
+            renderFeed();
+            renderTrendingSidebar();
+            closeUploadModal();
+            showToast(`${mediaType === 'audio' ? 'Audio track' : 'Music video'} published successfully!`);
+        }
+
+        function filterCategory(category) {
+            activeCategory = category;
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => {
+                const isActive = btn.textContent.trim().toLowerCase() === category.toLowerCase();
+                btn.className = isActive 
+                    ? "category-btn active px-5 py-2.5 rounded-full bg-indigo-600 text-white whitespace-nowrap transition-all shadow-md"
+                    : "category-btn px-5 py-2.5 rounded-full bg-gray-800/80 hover:bg-gray-700 text-gray-300 border border-gray-700/60 whitespace-nowrap transition-all";
+            });
+
+            document.getElementById('feedTitle').innerHTML = category === 'Saved' 
+                ? `<i class="fa-solid fa-bookmark text-amber-400"></i> Saved Library` 
+                : `<i class="fa-solid fa-compact-disc text-indigo-400"></i> ${category} Tracks`;
+
+            renderFeed();
+        }
+
+        function toggleSavedFilter() { filterCategory('Saved'); }
+
+        function handleSearch(e) {
+            searchQuery = e.target.value.toLowerCase().trim();
+            document.getElementById('clearSearchBtn').classList.toggle('hidden', searchQuery.length === 0);
+            renderFeed();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            renderFeed();
+        }
+
+        function resetFilters() {
+            clearSearch();
+            filterCategory('MUSIC');
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function timeAgo(dateString) {
+            const diff = Math.floor((new Date() - new Date(dateString)) / (1000 * 60 * 60 * 24));
+            if (diff <= 0) return 'Today';
+            if (diff === 1) return 'Yesterday';
+            if (diff < 30) return `${diff} days ago`;
+            if (diff < 365) return `${Math.floor(diff / 30)} months ago`;
+            return `${Math.floor(diff / 365)} years ago`;
+        }
+
+        function slugify(text) {
+            return text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+        }
+
+        function escapeHtml(str) {
+            return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.remove('hidden', 'translate-y-4');
+            toast.classList.add('flex', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.add('hidden', 'translate-y-4');
+                toast.classList.remove('flex', 'translate-y-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
